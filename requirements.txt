@@ -1,6 +1,6 @@
 plotly.express
-pandas.api.types
-pathlib
-numpy
-pandas
-streamlit
+streamlit>=1.33
+pandas>=2.2
+plotly>=5.20
+openpyxl>=3.1.2
+numpy>=1.26
