@@ -198,8 +198,9 @@ with col_main:
     fig1 = grafico(base, f"")
     
     st.plotly_chart(fig1, use_container_width=True)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=False)
     
+
 
 
 
