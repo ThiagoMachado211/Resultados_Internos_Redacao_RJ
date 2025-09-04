@@ -183,7 +183,6 @@ with col_notas:
     st.subheader(aba_sel)
     df_sheet = abas[aba_sel].copy()
     df_long = preparar_df(df_sheet)
-
     regionais = df_long["Regional"].dropna().unique()
     regional = st.selectbox(
         "Regional",
@@ -191,6 +190,11 @@ with col_notas:
         key=f"reg_{aba_sel}",
         label_visibility="visible"
     )
+    base = montar_base(df_long, regional)
+    fig = grafico(base, f"")
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 with col_part:
     st.subheader(aba_sel)
@@ -204,6 +208,7 @@ with col_part:
     fig = grafico(base, f"")
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
