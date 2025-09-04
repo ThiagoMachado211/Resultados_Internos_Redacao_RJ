@@ -166,7 +166,7 @@ abas = ler_abas_local(excel_path)
 tab_names = list(abas.keys())
 
 # Layout: coluna esquerda = menu; direita = conteúdo
-col_nav, col_main = st.columns([1, 4], gap="large")
+col_nav, col_main = st.columns([3, 7], gap="large")
 
 with col_nav:
     st.markdown("")
@@ -174,7 +174,7 @@ with col_nav:
         label="Abas",                  # rótulo não-vazio (evita warning de acessibilidade)
         options=tab_names,
         index=0,
-        width = 50vw,
+        width = 50,
         key="aba_radio",
         label_visibility="collapsed"   # oculta o texto do rótulo
     )
@@ -196,6 +196,7 @@ with col_main:
     fig = grafico(base, f"")
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
