@@ -174,7 +174,7 @@ with col_nav:
         label="Abas",                  # rótulo não-vazio (evita warning de acessibilidade)
         options=tab_names,
         index=0,
-        width = 500,
+        width = 50vw,
         key="aba_radio",
         label_visibility="collapsed"   # oculta o texto do rótulo
     )
@@ -196,6 +196,7 @@ with col_main:
     fig = grafico(base, f"")
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
