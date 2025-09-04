@@ -195,11 +195,12 @@ with col_main:
 
     base = montar_base(df_long, regional)
     fig1 = grafico(base, f"")
-    fig1 = grafico(base, f"")
+    fig2 = grafico(base, f"")
     
     st.plotly_chart(fig1, use_container_width=False)
     st.plotly_chart(fig2, use_container_width=False)
     
+
 
 
 
