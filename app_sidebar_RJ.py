@@ -198,18 +198,13 @@ with col_part:
     df_long = preparar_df(df_sheet)
 
     regionais = df_long["Regional"].dropna().unique()
-    regional = st.selectbox(
-        "Regional",
-        sorted(regionais),
-        key=f"reg_{aba_sel}",
-        label_visibility="visible"
-    )
 
     
     base = montar_base(df_long, regional)
     fig = grafico(base, f"")
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
