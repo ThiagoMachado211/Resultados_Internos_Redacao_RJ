@@ -194,12 +194,13 @@ with col_main:
 
 
     base = montar_base(df_long, regional)
-    fig1 = grafico(base, f"")
-    fig2 = grafico(base, f"")
+    fig1 = grafico(base, f"Evolução das Notas")
+    fig2 = grafico(base, f"Participação e Textos Insuficientes")
     
     st.plotly_chart(fig1, use_container_width=True)
     st.plotly_chart(fig2, use_container_width=True)
     
+
 
 
 
