@@ -129,7 +129,29 @@ def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
     )
     return base
 
-def grafico(base: pd.DataFrame, titulo: str):
+def grafico1(base: pd.DataFrame, titulo: str):
+    fig = px.line(base, x="Avaliação", y="Nota", markers=True, title=titulo)
+    fig.update_traces(
+        marker=dict(size=MARKER_SIZE),
+        text=base["label_text"],
+        textposition="top center",
+        textfont=dict(size=FONT_SIZE),
+        hovertext=base["hover_text"],
+        hovertemplate="%{hovertext}<extra></extra>"
+    )
+    fig.update_layout(
+        font=dict(size=FONT_SIZE),
+        xaxis_title="", yaxis_title="",
+        xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
+        yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE), range=[0.95*float(base["Nota"].min()),  1.05*float(base["Nota"].max())] ),
+        legend=dict(font=dict(size=FONT_SIZE)),
+        hovermode="x unified",
+        hoverlabel=dict(font_size=FONT_SIZE),
+        height=450,
+    )
+    return fig
+
+def grafico2(base: pd.DataFrame, titulo: str):
     fig = px.line(base, x="Avaliação", y="Nota", markers=True, title=titulo)
     fig.update_traces(
         marker=dict(size=MARKER_SIZE),
@@ -194,12 +216,13 @@ with col_main:
 
 
     base = montar_base(df_long, regional)
-    fig1 = grafico(base, f"Evolução das Notas")
-    fig2 = grafico(base, f"Participação e Textos Insuficientes")
+    fig1 = grafico1(base, f"Evolução das Notas")
+    fig2 = grafico2(base, f"Participação e Textos Insuficientes")
     
     st.plotly_chart(fig1, use_container_width=True)
     st.plotly_chart(fig2, use_container_width=True)
     
+
 
 
 
