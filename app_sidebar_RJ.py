@@ -165,8 +165,7 @@ abas = ler_abas_local(excel_path)
 tab_names = list(abas.keys())
 
 
-# Layout: coluna esquerda = menu; direita = conteúdo
-col_nav, col_notas, col_part = st.columns([1,2,2], gap="large")
+col_nav, col_main = st.columns([1,2], gap="large")
 
 with col_nav:
     st.markdown("")
@@ -179,10 +178,11 @@ with col_nav:
         label_visibility="collapsed"   # oculta o texto do rótulo
     )
 
-with col_notas:
+with col_main:
     st.subheader(aba_sel)
     df_sheet = abas[aba_sel].copy()
     df_long = preparar_df(df_sheet)
+
     regionais = df_long["Regional"].dropna().unique()
     regional = st.selectbox(
         "Regional",
@@ -190,20 +190,6 @@ with col_notas:
         key=f"reg_{aba_sel}",
         label_visibility="visible"
     )
-    base = montar_base(df_long, regional)
-    fig = grafico(base, f"")
-
-    st.plotly_chart(fig, use_container_width=True)
-
-
-with col_part:
-    st.subheader(aba_sel)
-    df_sheet = abas[aba_sel].copy()
-    df_long = preparar_df(df_sheet)
-
-    regionais = df_long["Regional"].dropna().unique()
-
-    
     base = montar_base(df_long, regional)
     fig = grafico(base, f"")
 
