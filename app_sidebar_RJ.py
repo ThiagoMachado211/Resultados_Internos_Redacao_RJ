@@ -177,6 +177,13 @@ with col_nav:
         key="aba_radio",
         label_visibility="collapsed"   # oculta o texto do rótulo
     )
+
+
+with col_main:
+    st.subheader(aba_sel)
+    df_sheet = abas[aba_sel].copy()
+    df_long = preparar_df(df_sheet)
+    
     regionais = df_long["Regional"].dropna().unique()
     regional = st.selectbox(
         "Regional",
@@ -186,16 +193,11 @@ with col_nav:
     )
 
 
-with col_main:
-    st.subheader(aba_sel)
-    df_sheet = abas[aba_sel].copy()
-    df_long = preparar_df(df_sheet)
-
-
     base = montar_base(df_long, regional)
     fig = grafico(base, f"")
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
