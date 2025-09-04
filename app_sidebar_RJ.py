@@ -166,7 +166,7 @@ abas = ler_abas_local(excel_path)
 tab_names = list(abas.keys())
 
 # Layout: coluna esquerda = menu; direita = conteúdo
-col_nav, col_main = st.columns([1, 3], gap="large")
+col_nav, col_main = st.columns([1,4], gap="large")
 
 with col_nav:
     st.markdown("")
