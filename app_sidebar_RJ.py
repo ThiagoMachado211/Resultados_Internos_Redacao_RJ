@@ -238,20 +238,29 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
     y_min = max(0, float(df_plot["Valor_pct"].min()) - 5)
     y_max = min(100, float(df_plot["Valor_pct"].max()) + 5)
     fig.update_layout(
-        font=dict(size=FONT_SIZE),
-        xaxis_title="", yaxis_title="",
-        xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
-        yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
-                   range=[y_min, y_max], ticksuffix="%"),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom", y=1.05,
-            xanchor="center", x=0.5,
-            font=dict(size=FONT_SIZE)
-        ),
-        height=470,
-        margin=dict(t=90),
+    font=dict(size=FONT_SIZE),
+    xaxis_title="", yaxis_title="",
+    xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
+    yaxis=dict(
+        tickfont=dict(size=FONT_SIZE),
+        title_font=dict(size=FONT_SIZE),
+        range=[y_min, y_max],
+        ticksuffix="%"          # eixo em %
+    ),
+    # legenda horizontal, centralizada, com folga do título:
+    legend=dict(
+        orientation="h",
+        x=0.5, xanchor="center",
+        y=1.12, yanchor="top",   # ↑ empurra a legenda um pouco para cima
+        font=dict(size=FONT_SIZE)
+    ),
+    title=dict(pad=dict(b=12)),  # folga entre título e o resto
+    hovermode="x unified",
+    hoverlabel=dict(font_size=FONT_SIZE),
+    height=470,
+    margin=dict(t=140)           # ↑ mais espaço no topo para caber título + legenda
     )
+
     return fig
 # ---------- Gráficos ----------------
 
@@ -327,6 +336,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
