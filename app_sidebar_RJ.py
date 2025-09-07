@@ -281,7 +281,7 @@ tab_names = [
     if ("particip" not in n.lower()) and not ("texto" in n.lower() and "insuf" in n.lower())
 ]
 
-col_nav, col_main = st.columns([1, 2], gap="small")
+col_nav, col_main = st.columns([1, 3], gap="small")
 
 with col_nav:
     st.markdown("")
@@ -333,6 +333,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
