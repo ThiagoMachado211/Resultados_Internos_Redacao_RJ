@@ -237,28 +237,23 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
     # eixo Y (0–100) com sufixo "%"
     y_min = max(0, float(df_plot["Valor_pct"].min()) - 5)
     y_max = min(100, float(df_plot["Valor_pct"].max()) + 5)
+    
     fig.update_layout(
     font=dict(size=FONT_SIZE),
     xaxis_title="", yaxis_title="",
     xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
-    yaxis=dict(
-        tickfont=dict(size=FONT_SIZE),
-        title_font=dict(size=FONT_SIZE),
-        range=[y_min, y_max],
-        ticksuffix="%"          # eixo em %
-    ),
-    # legenda horizontal, centralizada, com folga do título:
+    yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
+               range=[y_min, y_max], ticksuffix="%"),
     legend=dict(
         orientation="h",
         x=0.5, xanchor="center",
-        y=1.12, yanchor="bottom",   # ↑ empurra a legenda um pouco para cima
+        y=-0.20, yanchor="top",     # ↓ coloca a legenda fora, embaixo
         font=dict(size=FONT_SIZE)
     ),
-    title=dict(pad=dict(b=12)),  # folga entre título e o resto
     hovermode="x unified",
     hoverlabel=dict(font_size=FONT_SIZE),
     height=470,
-    margin=dict(t=140)           # ↑ mais espaço no topo para caber título + legenda
+    margin=dict(t=90, b=120)       # reserva espaço no rodapé
     )
 
     return fig
@@ -336,6 +331,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
