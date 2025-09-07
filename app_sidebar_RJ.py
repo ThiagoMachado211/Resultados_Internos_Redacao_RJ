@@ -142,6 +142,8 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     txt = base_notas["Valor"].map(lambda v: f"{v:.2f}")
     fig = px.line(base_notas, x="Avaliação", y="Valor", markers=True, title=titulo)
     fig.update_traces(
+        mode="lines+markers+text",         # << necessário para exibir o texto
+        texttemplate="%{y:.2f}",           # mostra o valor (2 casas) — dispensa a variável txt
         marker=dict(size=MARKER_SIZE),
         text=txt,
         textposition="top center",
@@ -150,8 +152,8 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
         hovertemplate="%{hovertext}<extra></extra>",
         line=dict(width=3),
     )
-    y_min = 0.95 * float(base_notas["Valor"].min())
-    y_max = 1.05 * float(base_notas["Valor"].max())
+    y_min = 0.9 * float(base_notas["Valor"].min())
+    y_max = 1.1 * float(base_notas["Valor"].max())
     fig.update_layout(
         font=dict(size=FONT_SIZE),
         xaxis_title="", yaxis_title="",
@@ -272,6 +274,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
