@@ -8,7 +8,7 @@ from pandas.api.types import is_numeric_dtype
 
 # ===================== CONFIG =====================
 PAGE_TITLE = "Notas por Regional: Rio de Janeiro"
-FONT_SIZE = 26         # fonte maior
+FONT_SIZE = 36         # fonte maior
 MARKER_SIZE = 12
 DEFAULT_XLSX = "data/Comparativo_RJ.xlsx"
 # ==================================================
@@ -126,6 +126,8 @@ def achar_companheiras(todas_abas: dict, base_name: str):
             insuf_name = nome
     return part_name, insuf_name
 
+
+
 # ---------- Gráficos ----------
 def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     # texto: somente a nota, sempre acima
@@ -154,6 +156,7 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
         height=470,
     )
     return fig
+
 
 def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.DataFrame, titulo: str):
     a = base_part[["Avaliação", "Valor"]].copy();  a["Métrica"] = "Participação (%)"
@@ -187,7 +190,7 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
         height=470,
     )
     return fig
-
+# ---------- Gráficos ----------------
 
 
 # ---------- Main ----------
@@ -218,7 +221,6 @@ with col_nav:
         options=tab_names,
         index=0,
         width=320,
-        font_size=40,
         key="aba_radio",
         label_visibility="collapsed"
     )
@@ -262,4 +264,5 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
