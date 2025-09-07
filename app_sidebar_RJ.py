@@ -144,7 +144,7 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     cores_txt = []
     for i, delta in enumerate(base_notas["Delta"]):
         if i == 0 or pd.isna(delta):
-            cores_txt.append("black")
+            cores_txt.append("grey")
         else:
             cores_txt.append("royalblue" if delta > 0 else "red")
 
@@ -284,6 +284,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
