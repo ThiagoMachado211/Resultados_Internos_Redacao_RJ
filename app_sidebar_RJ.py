@@ -235,8 +235,8 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
             tr.textfont = dict(size=FONT_SIZE, color=cores_insu)
 
     # eixo Y (0–100) com sufixo "%"
-    y_min = max(0, float(df_plot["Valor_pct"].min()) - 5)
-    y_max = min(100, float(df_plot["Valor_pct"].max()) + 5)
+    y_min = 0
+    y_max = 100
     
     fig.update_layout(
     font=dict(size=FONT_SIZE),
@@ -331,6 +331,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
