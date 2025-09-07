@@ -213,7 +213,7 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
     # gráfico sem hover, com rótulos
     fig = px.line(
         df_plot, x="Avaliação", y="Valor_pct", color="Métrica",
-        markers=True, text="Label", title=titulo
+        markers=True, text="Label", title=titulo, labels={"Métrica": ""}
     )
     fig.update_traces(
         mode="lines+markers+text",
@@ -331,6 +331,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
