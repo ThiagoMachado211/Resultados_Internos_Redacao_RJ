@@ -111,8 +111,8 @@ def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
     base["hover_text"] = (
         "<b>" + base["Avaliação"].astype(str) + "</b>"
         + "<br>Valor: " + base["Valor"].map(fnum)
-        + "<br>Δ abs.: " + base["Delta"].map(fsgn)
-        + "<br>Δ %: " + base["Delta_pct"].map(fsgn) + "%"
+        + "<br>Variação absoluta: " + base["Delta"].map(fsgn)
+        + "<br>Variação percentual: " + base["Delta_pct"].map(fsgn) + "%"
     )
     return base
 
@@ -184,8 +184,8 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
         hovertemplate="%{hovertext}<extra></extra>",
         line=dict(width=3),
     )
-    y_min = max(0, df_plot["Valor"].min() - 5)
-    y_max = min(100, df_plot["Valor"].max() + 5)
+    y_min = 0
+    y_max = 1
     fig.update_layout(
         font=dict(size=FONT_SIZE),
         xaxis_title="", yaxis_title="",
@@ -272,6 +272,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
