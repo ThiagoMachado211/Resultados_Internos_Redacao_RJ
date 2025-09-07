@@ -1,4 +1,4 @@
-# app.py — Notas por Regional (menu lateral espaçado, fonte maior, 2 linhas no gráfico 2)
+# app.py — Notas por Regional (mantém opções originais; 2 linhas no gráfico 2)
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ from pandas.api.types import is_numeric_dtype
 
 # ===================== CONFIG =====================
 PAGE_TITLE = "Notas por Regional: Rio de Janeiro"
-FONT_SIZE = 26          # ↑ fonte geral
+FONT_SIZE = 26          # fonte maior
 MARKER_SIZE = 12
 DEFAULT_XLSX = "data/Comparativo_RJ.xlsx"
 # ==================================================
@@ -17,22 +17,17 @@ st.set_page_config(page_title=PAGE_TITLE, layout="wide")
 st.title(PAGE_TITLE)
 st.caption("")
 
-# ---------- CSS: fonte maior e espaçamento vertical no menu da esquerda ----------
+# ---------- CSS: fonte maior + espaçamento no menu esquerdo ----------
 st.markdown(
     f"""
 <style>
-/* Fonte base ampla */
 html, body, [class*="css"] {{ font-size: {FONT_SIZE}px !important; }}
-
-/* Labels maiores */
 .stSelectbox label {{ font-size: {FONT_SIZE}px !important; }}
 .stSelectbox div[data-baseweb="select"] div {{ font-size: {FONT_SIZE}px !important; }}
-div[role="radiogroup"] label {{ font-size: {FONT_SIZE}px !important; }}
-div[role="radiogroup"] p {{ font-size: {FONT_SIZE}px !important; }}
+div[role="radiogroup"] label, div[role="radiogroup"] p {{ font-size: {FONT_SIZE}px !important; }}
 
-/* Espaçamento vertical suave entre as opções do radio (menu lateral) */
+/* respiro vertical nas opções do radio */
 div[role="radiogroup"] > * {{ margin-bottom: 10px !important; }}
-/* alguns layouts do Streamlit usam divs internos; garantimos o padding também */
 div[role="radiogroup"] > div {{ padding: 4px 0 !important; }}
 </style>
 """,
@@ -72,31 +67,29 @@ def parse_br_number(x):
         s = s.replace(",", "")
     return pd.to_numeric(s, errors="coerce")
 
-def ler_aba(excel_path: Path, sheet_name: str) -> pd.DataFrame | None:
-    try:
-        return pd.read_excel(excel_path, sheet_name=sheet_name, engine="openpyxl")
-    except Exception:
-        return None
-
 def ler_abas_local(caminho: Path) -> dict[str, pd.DataFrame]:
     return pd.read_excel(caminho, sheet_name=None, engine="openpyxl")
 
 def preparar_df(df: pd.DataFrame) -> pd.DataFrame:
     if df.columns[0] != "Regional":
         df = df.rename(columns={df.columns[0]: "Regional"})
+    # se a última linha for algo como "Presença" (não-regional), descarta
     ultima_rotulo = str(df.iloc[-1, 0]).lower()
     if "presen" in ultima_rotulo:
         df = df.iloc[:-1].copy()
+
     aval_cols = list(df.columns[1:])
     for c in aval_cols:
         if not is_numeric_dtype(df[c]):
             df[c] = df[c].map(parse_br_number)
+
     df_long = df.melt(
         id_vars="Regional", value_vars=aval_cols,
         var_name="Avaliação", value_name="Valor"
     )
-    df_long["Avaliação"] = pd.Categorical(df_long["Avaliação"],
-                                          categories=aval_cols, ordered=True)
+    df_long["Avaliação"] = pd.Categorical(
+        df_long["Avaliação"], categories=aval_cols, ordered=True
+    )
     return df_long
 
 def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
@@ -116,9 +109,26 @@ def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
     )
     return base
 
+# --------- localizar abas companheiras (sem aparecer no menu) ----------
+def achar_companheiras(todas_abas: dict, base_name: str):
+    """Encontra as abas de 'Participação' e 'Texto Insuficiente' correspondentes ao base_name.
+    É tolerante a variações: 'participa', 'texto insuf', nomes cortados pelo limite do Excel, etc."""
+    base_lower = base_name.lower()
+    part_name = None
+    insuf_name = None
+    for nome in todas_abas.keys():
+        low = nome.lower()
+        if low == base_lower:
+            continue
+        if low.startswith(base_lower) and "particip" in low:
+            part_name = nome
+        if low.startswith(base_lower) and ("texto" in low and "insuf" in low):
+            insuf_name = nome
+    return part_name, insuf_name
+
 # ---------- Gráficos ----------
 def grafico_notas(base_notas: pd.DataFrame, titulo: str):
-    # Textos só com o número da nota, sempre acima
+    # texto: somente a nota, sempre acima
     txt = base_notas["Valor"].map(lambda v: f"{v:.2f}")
     fig = px.line(base_notas, x="Avaliação", y="Valor", markers=True, title=titulo)
     fig.update_traces(
@@ -148,35 +158,23 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
 def grafico_participacao_insuficiente(base_part: pd.DataFrame,
                                       base_insuf: pd.DataFrame,
                                       titulo: str):
-    # Combina duas séries em um único DF longo
-    a = base_part[["Avaliação", "Valor"]].copy()
-    a["Métrica"] = "Participação (%)"
-    b = base_insuf[["Avaliação", "Valor"]].copy()
-    b["Métrica"] = "Texto insuficiente (%)"
+    a = base_part[["Avaliação", "Valor"]].copy();  a["Métrica"] = "Participação (%)"
+    b = base_insuf[["Avaliação", "Valor"]].copy(); b["Métrica"] = "Texto insuficiente (%)"
     df_plot = pd.concat([a, b], ignore_index=True)
 
-    # tooltips simples em %
-    def fnum(x): return "—" if pd.isna(x) else f"{x:.2f}%"
-    hover = (
+    df_plot["hover_text"] = (
         "<b>" + df_plot["Avaliação"].astype(str) + "</b>"
         + "<br>" + df_plot["Métrica"] + ": "
-        + df_plot["Valor"].map(lambda v: f"{v:.2f}")
-        + "%"
+        + df_plot["Valor"].map(lambda v: f"{v:.2f}") + "%"
     )
-    df_plot["hover_text"] = hover
 
-    fig = px.line(
-        df_plot, x="Avaliação", y="Valor", color="Métrica",
-        markers=True, title=titulo
-    )
+    fig = px.line(df_plot, x="Avaliação", y="Valor", color="Métrica", markers=True, title=titulo)
     fig.update_traces(
         marker=dict(size=MARKER_SIZE),
         hovertext=df_plot["hover_text"],
         hovertemplate="%{hovertext}<extra></extra>",
         line=dict(width=3),
     )
-
-    # eixo Y de 0 a 100% com margem
     y_min = max(0, df_plot["Valor"].min() - 5)
     y_max = min(100, df_plot["Valor"].max() + 5)
     fig.update_layout(
@@ -203,7 +201,13 @@ if not excel_path.exists():
     st.stop()
 
 abas = ler_abas_local(excel_path)
-tab_names = list(abas.keys())
+
+# *** MANTÉM APENAS AS OPÇÕES ORIGINAIS NO MENU ***
+# Filtra fora nomes que contaminem o menu (participação / texto insuficiente)
+tab_names = [
+    n for n in abas.keys()
+    if ("particip" not in n.lower()) and not ("texto" in n.lower() and "insuf" in n.lower())
+]
 
 col_nav, col_main = st.columns([1, 2], gap="large")
 
@@ -213,7 +217,7 @@ with col_nav:
         label="Abas",
         options=tab_names,
         index=0,
-        width=300,
+        width=320,
         key="aba_radio",
         label_visibility="collapsed"
     )
@@ -234,30 +238,26 @@ with col_main:
     )
 
     base_notas = montar_base(df_long_notas, regional)
-    fig1 = grafico_notas(base_notas, "Evolução das Notas")
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(grafico_notas(base_notas, "Evolução das Notas"), use_container_width=True)
 
-    # ----- PARTICIPAÇÃO e TEXTO INSUFICIENTE -----
-    # Procuramos por abas-irmãs no mesmo xlsx
-    sheet_part = f"{aba_sel} - Participação"
-    sheet_insu = f"{aba_sel} - Texto Insuficiente"
+    # ----- PARTICIPAÇÃO e TEXTO INSUFICIENTE (busca abas companheiras sem mostrar no menu) -----
+    aba_part, aba_insu = achar_companheiras(abas, aba_sel)
 
-    df_part = ler_aba(excel_path, sheet_part)
-    df_insu = ler_aba(excel_path, sheet_insu)
-
-    if (df_part is None) or (df_insu is None):
+    if not aba_part or not aba_insu:
         st.info(
-            "Para o 2º gráfico, eu procuro as abas "
-            f"`{sheet_part}` e `{sheet_insu}` no mesmo Excel.\n"
-            "Se não existirem, crie-as (estrutura igual às abas de notas, com Regionais nas linhas e avaliações nas colunas)."
+            "Para o 2º gráfico, procuro abas companheiras que comecem com "
+            f"`{aba_sel}` e contenham “participa” e “texto insuf…”.\n"
+            "Ex.: `2º Ano - Regular - Participação` e `2º Ano - Regular - Texto Insuficiente`.\n"
+            "Se os nomes estiverem diferentes, me diga que eu ajusto o detector."
         )
     else:
-        df_long_part = preparar_df(df_part)
-        df_long_insu = preparar_df(df_insu)
+        df_long_part = preparar_df(abas[aba_part])
+        df_long_insu = preparar_df(abas[aba_insu])
         base_part = montar_base(df_long_part, regional)
         base_insu = montar_base(df_long_insu, regional)
-
-        fig2 = grafico_participacao_insuficiente(
-            base_part, base_insu, "Participação e Textos Insuficientes"
+        st.plotly_chart(
+            grafico_participacao_insuficiente(
+                base_part, base_insu, "Participação e Textos Insuficientes"
+            ),
+            use_container_width=True
         )
-        st.plotly_chart(fig2, use_container_width=True)
