@@ -147,7 +147,6 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
             cores_txt.append("grey")
         else:
             cores_txt.append("royalblue" if delta > 0 else "red")
-
     
     fig = px.line(base_notas, x="Avaliação", y="Valor", markers=True, title=titulo)
     fig.update_traces(
@@ -178,26 +177,67 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     return fig
 
 
-def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.DataFrame, titulo: str):
-    a = base_part[["Avaliação", "Valor"]].copy();  a["Métrica"] = "Participação (%)"
-    b = base_insuf[["Avaliação", "Valor"]].copy(); b["Métrica"] = "Texto insuficiente (%)"
+def grafico_participacao_insuficiente(base_part: pd.DataFrame,
+                                      base_insuf: pd.DataFrame,
+                                      titulo: str):
+    # monta DF longo com os rótulos já formatados
+    def fmt_pct(v):
+        # se vier em fração (0–1), converte p/ %; se já vier em %, mantém
+        return f"{v*100:.2f}%" if pd.notna(v) and v <= 1.2 else f"{v:.2f}%"
+
+    a = base_part[["Avaliação", "Valor", "Delta"]].copy()
+    a["Métrica"] = "Participação (%)"
+    a["Label"] = a["Valor"].map(fmt_pct)
+
+    b = base_insuf[["Avaliação", "Valor", "Delta"]].copy()
+    b["Métrica"] = "Texto insuficiente (%)"
+    b["Label"] = b["Valor"].map(fmt_pct)
+
     df_plot = pd.concat([a, b], ignore_index=True)
 
-    df_plot["hover_text"] = (
-        "<b>" + df_plot["Avaliação"].astype(str) + "</b>"
-        + "<br>" + df_plot["Métrica"] + ": "
-        + df_plot["Valor"].map(lambda v: f"{v:.2f}") + "%"
+    # gráfico com texto sobre cada ponto
+    fig = px.line(
+        df_plot, x="Avaliação", y="Valor", color="Métrica",
+        markers=True, text="Label", title=titulo
     )
-
-    fig = px.line(df_plot, x="Avaliação", y="Valor", color="Métrica", markers=True, title=titulo)
     fig.update_traces(
+        mode="lines+markers+text",
+        textposition="top center",
         marker=dict(size=MARKER_SIZE),
-        hovertext=df_plot["hover_text"],
-        hovertemplate="%{hovertext}<extra></extra>",
         line=dict(width=3),
+        # remove hover
+        hoverinfo="skip",
+        hovertemplate=None,
     )
-    y_min = 0
-    y_max = 1
+    fig.update_layout(hovermode=False)
+
+    # cores do texto por ponto (1º preto; depois azul se Δ>0, vermelho caso contrário)
+    def cores_por_delta(deltas):
+        cores = []
+        for i, d in enumerate(deltas):
+            if i == 0 or pd.isna(d):
+                cores.append("black")
+            else:
+                cores.append("royalblue" if d > 0 else "crimson")
+        return cores
+
+    cores_part = cores_por_delta(base_part["Delta"].tolist())
+    cores_insu = cores_por_delta(base_insuf["Delta"].tolist())
+
+    # aplica cores por trace
+    for tr in fig.data:
+        if tr.name == "Participação (%)":
+            tr.textfont = dict(size=FONT_SIZE, color=cores_part)
+        elif tr.name == "Texto insuficiente (%)":
+            tr.textfont = dict(size=FONT_SIZE, color=cores_insu)
+
+    # eixo Y: detecta 0–1 (fração) ou 0–100 (%)
+    vmax = float(df_plot["Valor"].max())
+    if vmax <= 1.2:
+        y_min, y_max = 0, 1
+    else:
+        y_min, y_max = 0, 100
+
     fig.update_layout(
         font=dict(size=FONT_SIZE),
         xaxis_title="", yaxis_title="",
@@ -205,8 +245,6 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
         yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
                    range=[y_min, y_max]),
         legend=dict(font=dict(size=FONT_SIZE)),
-        hovermode="x unified",
-        hoverlabel=dict(font_size=FONT_SIZE),
         height=470,
     )
     return fig
@@ -284,6 +322,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
