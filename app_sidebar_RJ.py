@@ -140,15 +140,24 @@ def achar_companheiras(todas_abas: dict, base_name: str):
 def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     # texto: somente a nota, sempre acima
     txt = base_notas["Valor"].map(lambda v: f"{v:.2f}")
-    cores_txt = np.where(base_notas["Delta"] >= 0, "blue", "red")
+    
+    cores_txt = []
+    for i, delta in enumerate(base_notas["Delta"]):
+        if i == 0 or pd.isna(delta):
+            cores_txt.append("black")
+        else:
+            cores_txt.append("royalblue" if delta > 0 else "red")
+
+    
     fig = px.line(base_notas, x="Avaliação", y="Valor", markers=True, title=titulo)
     fig.update_traces(
-        mode="lines+markers+text",         
-        texttemplate="%{y:.2f}", 
-        textfont=dict(size=FONT_SIZE, color=list(cores_txt)),
-        marker=dict(size=MARKER_SIZE),
+        mode="lines+markers+text",    
         text=txt,
         textposition="top center",
+        texttemplate="%{y:.2f}", 
+        textfont=dict(size=FONT_SIZE), 
+        textfont_color=cores_txt,
+        marker=dict(size=MARKER_SIZE),
         hovertext=base_notas["hover_text"],
         hovertemplate="%{hovertext}<extra></extra>",
         line=dict(width=3),
@@ -275,6 +284,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
