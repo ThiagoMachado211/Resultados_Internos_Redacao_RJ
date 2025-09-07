@@ -25,7 +25,7 @@ st.markdown(
 <style>
 html, body, [class*="css"] {{ font-size: {FONT_SIZE}px !important; }}
 .stSelectbox label {{ font-size: {FONT_SIZE}px !important; }}
-.stSelectbox div[data-baseweb="select"] div {{ font-size: {FONT_SIZE}px !important; }}
+.stSelectbox div[data-baseweb="select"] div {{ font-size: 100px !important; }}
 div[role="radiogroup"] label, div[role="radiogroup"] p {{ font-size: {FONT_SIZE}px !important; }}
 
 /* respiro vertical nas opções do radio */
@@ -333,6 +333,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
