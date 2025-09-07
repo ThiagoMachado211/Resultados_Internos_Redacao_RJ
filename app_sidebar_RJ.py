@@ -8,7 +8,7 @@ from pandas.api.types import is_numeric_dtype
 
 # ===================== CONFIG =====================
 PAGE_TITLE = "Notas por Regional: Rio de Janeiro"
-FONT_SIZE = 26          # fonte maior
+FONT_SIZE = 26         # fonte maior
 MARKER_SIZE = 12
 DEFAULT_XLSX = "data/Comparativo_RJ.xlsx"
 # ==================================================
@@ -155,9 +155,7 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     )
     return fig
 
-def grafico_participacao_insuficiente(base_part: pd.DataFrame,
-                                      base_insuf: pd.DataFrame,
-                                      titulo: str):
+def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.DataFrame, titulo: str):
     a = base_part[["Avaliação", "Valor"]].copy();  a["Métrica"] = "Participação (%)"
     b = base_insuf[["Avaliação", "Valor"]].copy(); b["Métrica"] = "Texto insuficiente (%)"
     df_plot = pd.concat([a, b], ignore_index=True)
@@ -190,6 +188,8 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame,
     )
     return fig
 
+
+
 # ---------- Main ----------
 excel_path = resolve_excel_path()
 if not excel_path.exists():
@@ -218,6 +218,7 @@ with col_nav:
         options=tab_names,
         index=0,
         width=320,
+        font_size=40,
         key="aba_radio",
         label_visibility="collapsed"
     )
@@ -261,3 +262,4 @@ with col_main:
             ),
             use_container_width=True
         )
+
