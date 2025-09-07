@@ -239,21 +239,23 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
     y_max = 115
     
     fig.update_layout(
-    font=dict(size=FONT_SIZE),
-    xaxis_title="", yaxis_title="",
-    xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
-    yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
-               range=[y_min, y_max], ticksuffix="%"),
-    legend=dict(
-        orientation="h",
-        x=0.5, xanchor="center",
-        y=-0.20, yanchor="top",     # ↓ coloca a legenda fora, embaixo
-        font=dict(size=FONT_SIZE)
-    ),
-    hovermode="x unified",
-    hoverlabel=dict(font_size=FONT_SIZE),
-    height=600,
-    margin=dict(t=90, b=120)       # reserva espaço no rodapé
+        font=dict(size=FONT_SIZE),
+        xaxis_title="", yaxis_title="",
+        xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
+        yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
+                   range=[y_min, y_max], ticksuffix="%"),
+        legend=dict(
+            orientation="h",
+            x=0.5, xanchor="center",
+            y=1.22, yanchor="bottom",   # ↑ coloca a base da legenda ACIMA do topo do plot
+            font=dict(size=FONT_SIZE),
+            bgcolor="rgba(255,255,255,0.0)"
+        ),
+        title=dict(pad=dict(b=12)),
+        hovermode="x unified",
+        hoverlabel=dict(font_size=FONT_SIZE),
+        height=470,
+        margin=dict(t=180)             # ↑ dá espaço suficiente para título + legenda
     )
 
     return fig
@@ -331,6 +333,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
