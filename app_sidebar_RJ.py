@@ -149,7 +149,6 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
         marker=dict(size=MARKER_SIZE),
         text=txt,
         textposition="top center",
-        textfont=dict(size=FONT_SIZE),
         hovertext=base_notas["hover_text"],
         hovertemplate="%{hovertext}<extra></extra>",
         line=dict(width=3),
@@ -276,6 +275,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
