@@ -251,7 +251,7 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
     legend=dict(
         orientation="h",
         x=0.5, xanchor="center",
-        y=1.12, yanchor="top",   # ↑ empurra a legenda um pouco para cima
+        y=1.12, yanchor="bottom",   # ↑ empurra a legenda um pouco para cima
         font=dict(size=FONT_SIZE)
     ),
     title=dict(pad=dict(b=12)),  # folga entre título e o resto
@@ -336,6 +336,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
