@@ -13,9 +13,11 @@ MARKER_SIZE = 12
 DEFAULT_XLSX = "data/Comparativo_RJ.xlsx"
 # ==================================================
 
+
 st.set_page_config(page_title=PAGE_TITLE, layout="wide")
 st.title(PAGE_TITLE)
 st.caption("")
+
 
 # ---------- CSS: fonte maior + espaçamento no menu esquerdo ----------
 st.markdown(
@@ -34,6 +36,7 @@ div[role="radiogroup"] > div {{ padding: 4px 0 !important; }}
     unsafe_allow_html=True,
 )
 
+
 # ---------- Utilitários ----------
 def resolve_excel_path(default_rel_path: str = DEFAULT_XLSX) -> Path | None:
     here = Path(__file__).parent
@@ -47,6 +50,7 @@ def resolve_excel_path(default_rel_path: str = DEFAULT_XLSX) -> Path | None:
             p = here / p
         return p
     return here / default_rel_path
+
 
 def parse_br_number(x):
     if pd.isna(x):
@@ -67,8 +71,10 @@ def parse_br_number(x):
         s = s.replace(",", "")
     return pd.to_numeric(s, errors="coerce")
 
+
 def ler_abas_local(caminho: Path) -> dict[str, pd.DataFrame]:
     return pd.read_excel(caminho, sheet_name=None, engine="openpyxl")
+
 
 def preparar_df(df: pd.DataFrame) -> pd.DataFrame:
     if df.columns[0] != "Regional":
@@ -92,6 +98,7 @@ def preparar_df(df: pd.DataFrame) -> pd.DataFrame:
     )
     return df_long
 
+
 def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
     base = df_long[df_long["Regional"] == regional].sort_values("Avaliação").copy()
     base["Anterior"] = base["Valor"].shift(1)
@@ -108,6 +115,7 @@ def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
         + "<br>Δ %: " + base["Delta_pct"].map(fsgn) + "%"
     )
     return base
+
 
 # --------- localizar abas companheiras (sem aparecer no menu) ----------
 def achar_companheiras(todas_abas: dict, base_name: str):
@@ -212,7 +220,7 @@ tab_names = [
     if ("particip" not in n.lower()) and not ("texto" in n.lower() and "insuf" in n.lower())
 ]
 
-col_nav, col_main = st.columns([3, 2], gap="large")
+col_nav, col_main = st.columns([3, 2], gap="small")
 
 with col_nav:
     st.markdown("")
@@ -264,6 +272,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
