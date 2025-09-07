@@ -140,10 +140,12 @@ def achar_companheiras(todas_abas: dict, base_name: str):
 def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     # texto: somente a nota, sempre acima
     txt = base_notas["Valor"].map(lambda v: f"{v:.2f}")
+    cores_txt = np.where(base_notas["Delta"] >= 0, "blue", "red")
     fig = px.line(base_notas, x="Avaliação", y="Valor", markers=True, title=titulo)
     fig.update_traces(
-        mode="lines+markers+text",         # << necessário para exibir o texto
-        texttemplate="%{y:.2f}",           # mostra o valor (2 casas) — dispensa a variável txt
+        mode="lines+markers+text",         
+        texttemplate="%{y:.2f}", 
+        textfont=dict(size=FONT_SIZE, color=list(cores_txt)),
         marker=dict(size=MARKER_SIZE),
         text=txt,
         textposition="top center",
@@ -274,6 +276,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
