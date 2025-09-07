@@ -177,41 +177,13 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     return fig
 
 
-def grafico_participacao_insuficiente(base_part: pd.DataFrame,
-                                      base_insuf: pd.DataFrame,
-                                      titulo: str):
-    # monta DF longo com os rótulos já formatados
-    def fmt_pct(v):
-        # se vier em fração (0–1), converte p/ %; se já vier em %, mantém
-        return f"{v*100:.2f}%" if pd.notna(v) and v <= 1.2 else f"{v:.2f}%"
+def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.DataFrame, titulo: str):
+    # --- helpers ---
+    def as_percent(series: pd.Series) -> pd.Series:
+        """Converte 0–1 para 0–100 quando necessário."""
+        s = pd.to_numeric(series, errors="coerce")
+        return s * 100 if s.max() <= 1.2 else s
 
-    a = base_part[["Avaliação", "Valor", "Delta"]].copy()
-    a["Métrica"] = "Participação (%)"
-    a["Label"] = a["Valor"].map(fmt_pct)
-
-    b = base_insuf[["Avaliação", "Valor", "Delta"]].copy()
-    b["Métrica"] = "Texto insuficiente (%)"
-    b["Label"] = b["Valor"].map(fmt_pct)
-
-    df_plot = pd.concat([a, b], ignore_index=True)
-
-    # gráfico com texto sobre cada ponto
-    fig = px.line(
-        df_plot, x="Avaliação", y="Valor", color="Métrica",
-        markers=True, text="Label", title=titulo
-    )
-    fig.update_traces(
-        mode="lines+markers+text",
-        textposition="top center",
-        marker=dict(size=MARKER_SIZE),
-        line=dict(width=3),
-        # remove hover
-        hoverinfo="skip",
-        hovertemplate=None,
-    )
-    fig.update_layout(hovermode=False)
-
-    # cores do texto por ponto (1º preto; depois azul se Δ>0, vermelho caso contrário)
     def cores_por_delta(deltas):
         cores = []
         for i, d in enumerate(deltas):
@@ -221,31 +193,64 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame,
                 cores.append("royalblue" if d > 0 else "crimson")
         return cores
 
+    # dados já em %
+    a = base_part[["Avaliação", "Valor", "Delta"]].copy()
+    a["Métrica"] = "Participação (%)"
+    a["Valor_pct"] = as_percent(a["Valor"])
+    a["Label"] = a["Valor_pct"].map(lambda v: f"{v:.2f}%")
+
+    b = base_insuf[["Avaliação", "Valor", "Delta"]].copy()
+    b["Métrica"] = "Texto insuficiente (%)"
+    b["Valor_pct"] = as_percent(b["Valor"])
+    b["Label"] = b["Valor_pct"].map(lambda v: f"{v:.2f}%")
+
+    df_plot = pd.concat(
+        [a[["Avaliação", "Métrica", "Valor_pct", "Label"]],
+         b[["Avaliação", "Métrica", "Valor_pct", "Label"]]],
+        ignore_index=True
+    )
+
+    # gráfico sem hover, com rótulos
+    fig = px.line(
+        df_plot, x="Avaliação", y="Valor_pct", color="Métrica",
+        markers=True, text="Label", title=titulo
+    )
+    fig.update_traces(
+        mode="lines+markers+text",
+        textposition="top center",
+        marker=dict(size=MARKER_SIZE),
+        line=dict(width=3),
+        hoverinfo="skip",
+        hovertemplate=None,
+    )
+    fig.update_layout(hovermode=False)
+
+    # aplica cores do texto por trace
     cores_part = cores_por_delta(base_part["Delta"].tolist())
     cores_insu = cores_por_delta(base_insuf["Delta"].tolist())
-
-    # aplica cores por trace
     for tr in fig.data:
         if tr.name == "Participação (%)":
             tr.textfont = dict(size=FONT_SIZE, color=cores_part)
         elif tr.name == "Texto insuficiente (%)":
             tr.textfont = dict(size=FONT_SIZE, color=cores_insu)
 
-    # eixo Y: detecta 0–1 (fração) ou 0–100 (%)
-    vmax = float(df_plot["Valor"].max())
-    if vmax <= 1.2:
-        y_min, y_max = 0, 1
-    else:
-        y_min, y_max = 0, 100
-
+    # eixo Y (0–100) com sufixo "%"
+    y_min = max(0, float(df_plot["Valor_pct"].min()) - 5)
+    y_max = min(100, float(df_plot["Valor_pct"].max()) + 5)
     fig.update_layout(
         font=dict(size=FONT_SIZE),
         xaxis_title="", yaxis_title="",
         xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
         yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
-                   range=[y_min, y_max]),
-        legend=dict(font=dict(size=FONT_SIZE)),
+                   range=[y_min, y_max], ticksuffix="%"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom", y=1.05,
+            xanchor="center", x=0.5,
+            font=dict(size=FONT_SIZE)
+        ),
         height=470,
+        margin=dict(t=90),
     )
     return fig
 # ---------- Gráficos ----------------
@@ -322,6 +327,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
