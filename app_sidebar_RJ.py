@@ -172,7 +172,7 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
         legend=dict(font=dict(size=FONT_SIZE)),
         hovermode="x unified",
         hoverlabel=dict(font_size=FONT_SIZE),
-        height=470,
+        height=600,
     )
     return fig
 
@@ -252,7 +252,7 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
     ),
     hovermode="x unified",
     hoverlabel=dict(font_size=FONT_SIZE),
-    height=470,
+    height=600,
     margin=dict(t=90, b=120)       # reserva espaço no rodapé
     )
 
@@ -331,6 +331,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
