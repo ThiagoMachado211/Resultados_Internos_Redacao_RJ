@@ -29,7 +29,7 @@ html, body, [class*="css"] {{ font-size: {FONT_SIZE}px !important; }}
 div[role="radiogroup"] label, div[role="radiogroup"] p {{ font-size: 60px !important; color: blue; font-weight: bold; }}
 
 /* respiro vertical nas opções do radio */
-div[role="radiogroup"] > * {{ margin-bottom: 25px !important; }}
+div[role="radiogroup"] > * {{ margin-bottom: 5px !important; }}
 div[role="radiogroup"] > div {{ padding-bottom: 25px !important; }}
 </style>
 """,
@@ -333,6 +333,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
