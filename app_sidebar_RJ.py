@@ -293,7 +293,7 @@ with col_nav:
         label="Abas",
         options=tab_names,
         index=0,
-        padding-left=50,
+        padding_left=50,
         width=600,
         key="aba_radio",
         label_visibility="collapsed"
@@ -338,6 +338,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
