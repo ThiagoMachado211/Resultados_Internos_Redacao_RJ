@@ -339,19 +339,9 @@ with col_main:
         df_long_insu = preparar_df(abas[aba_insu])
         base_part = montar_base(df_long_part, regional)
         base_insu = montar_base(df_long_insu, regional)
-        st.plotly_chart(
-            grafico_participacao_insuficiente(
-                base_part, base_insu, "Participação e Textos Insuficientes"
-            ),
-            use_container_width=True
-        )
 
+        fig_part = grafico_participacao(base_part, titulo_base="Participação")
+        fig_insu = grafico_texto_insuficiente(base_insuf, titulo_base="Texto insuficiente")
 
-
-
-
-
-
-
-
-
+        # plotly
+        fig_part.show(); fig_insu.show()
