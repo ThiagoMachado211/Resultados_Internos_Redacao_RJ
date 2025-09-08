@@ -259,7 +259,7 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
         margin=dict(t=230),
         hovermode="x unified",
         hoverlabel=dict(font_size=FONT_SIZE),
-        height=750
+        height=900
     )
 
     return fig
@@ -337,6 +337,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
