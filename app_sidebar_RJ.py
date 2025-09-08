@@ -176,7 +176,7 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
         hovermode="x unified",
         hoverlabel=dict(font_size=FONT_SIZE),
         height=750,
-        width=600,
+        width=60,
     )
     return fig
 
@@ -338,5 +338,6 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
