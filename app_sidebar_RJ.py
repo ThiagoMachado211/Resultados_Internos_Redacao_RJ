@@ -256,7 +256,7 @@ def grafico_participacao_insuficiente(base_part: pd.DataFrame, base_insuf: pd.Da
         ),
         title=dict(text=titulo, x=0.5, xanchor="center", y=0.98, yanchor="top", pad=dict(b=12)),
         title_font=dict(size=50),
-        # title=dict(pad=dict(b=12)),
+        margin=dict(t=100),
         hovermode="x unified",
         hoverlabel=dict(font_size=FONT_SIZE),
         height=750,
@@ -338,6 +338,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
