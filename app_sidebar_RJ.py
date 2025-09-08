@@ -165,7 +165,7 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
     y_max = 1.1 * float(base_notas["Valor"].max())
     fig.update_layout(
         title=dict(text=titulo, x=0.5, xanchor="center", y=0.98, yanchor="top", pad=dict(b=12)),
-        title_font=dict(size=TITLE_SIZE),
+        title_font=dict(size=32),
         font=dict(size=FONT_SIZE),
         xaxis_title="", yaxis_title="",
         xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
@@ -335,6 +335,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
