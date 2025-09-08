@@ -343,6 +343,7 @@ with col_main:
         fig_part = grafico_participacao(base_part, titulo_base="Participação")
         fig_insu = grafico_texto_insuficiente(base_insuf, titulo_base="Texto insuficiente")
 
-        # plotly
-        fig_part.show(); fig_insu.show()
+    # plotly
+    fig_part.show(); fig_insu.show()
+
 
