@@ -7,7 +7,7 @@ import streamlit as st
 from pandas.api.types import is_numeric_dtype
 
 # ===================== CONFIG =====================
-PAGE_TITLE = "Notas por Regional: Rio de Janeiro"
+PAGE_TITLE = "Notas de Redação por Regional: Rio de Janeiro"
 FONT_SIZE = 36         # fonte maior
 MARKER_SIZE = 12
 DEFAULT_XLSX = "data/Comparativo_RJ.xlsx"
@@ -337,6 +337,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
