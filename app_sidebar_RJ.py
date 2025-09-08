@@ -344,6 +344,8 @@ with col_main:
         fig_insu = grafico_texto_insuficiente(base_insuf, titulo_base="Texto insuficiente")
 
     # plotly
-    fig_part.show(); fig_insu.show()
+    st.plotly_chart(fig_part, use_container_width=True, width=100)
+    st.plotly_chart(fig_insu, use_container_width=True, width=100)
+
 
 
