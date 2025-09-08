@@ -175,8 +175,7 @@ def grafico_notas(base_notas: pd.DataFrame, titulo: str):
         legend=dict(font=dict(size=FONT_SIZE)),
         hovermode="x unified",
         hoverlabel=dict(font_size=FONT_SIZE),
-        height=750,
-        width=60,
+        height=750
     )
     return fig
 
@@ -315,7 +314,7 @@ with col_main:
     )
 
     base_notas = montar_base(df_long_notas, regional)
-    st.plotly_chart(grafico_notas(base_notas, "Evolução das Notas"), use_container_width=True)
+    st.plotly_chart(grafico_notas(base_notas, "Evolução das Notas"), use_container_width=True, width=100)
 
     # ----- PARTICIPAÇÃO e TEXTO INSUFICIENTE (busca abas companheiras sem mostrar no menu) -----
     aba_part, aba_insu = achar_companheiras(abas, aba_sel)
@@ -338,6 +337,7 @@ with col_main:
             ),
             use_container_width=True
         )
+
 
 
 
