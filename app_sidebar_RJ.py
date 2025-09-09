@@ -258,7 +258,7 @@ with col_esq:
     )
 
     # localizar sheets desta série
-    nome_medias = achar_sheet_por_serie(abas, serie_escolhida, tipo="medias")
+    nome_medias = achar_sheet_por_serie(abas, serie_escolhida, tipo="")
     nome_part  = achar_sheet_por_serie(abas, serie_escolhida, tipo="particip")
     nome_insu  = achar_sheet_por_serie(abas, serie_escolhida, tipo="insuf")
 
@@ -321,3 +321,4 @@ with col_dir:
             st.plotly_chart(grafico_texto_insuficiente(base_insu, "Texto insuficiente (%)"), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível em **Texto insuficiente** nessa série.")
+
