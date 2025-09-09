@@ -172,16 +172,19 @@ def grafico_medias(base: pd.DataFrame, titulo: str):
     ymin = float(base["Nota"].min()) * (1 - Y_PAD_PCT)
     ymax = float(base["Nota"].max()) * (1 + Y_PAD_PCT)
 
-    fig = px.line(base, x="Avaliação", y="Nota", markers=True, title=titulo)
+    fig = px.line(base, x="Avaliação", y="Nota", markers=True, title=titulo, 
+                  text=base["Nota"].map(lambda v: f"Nota {v:.2f}"))
+
     fig.update_traces(
+        mode="lines+markers+text",                      # <- garante exibição do texto
         marker=dict(size=MARKER_SIZE),
-        text=base["Nota"].map(lambda v: f"Nota {v:.2f}"),
         textposition="top center",
         textfont=dict(size=FONT_SIZE, color=cores_por_delta(base["Delta"].tolist())),
         hovertext=base["hover_text"],
         hovertemplate="%{hovertext}<extra></extra>",
         showlegend=False
     )
+
     fig.update_layout(
         font=dict(size=FONT_SIZE),
         xaxis_title="", yaxis_title="",
@@ -194,6 +197,7 @@ def grafico_medias(base: pd.DataFrame, titulo: str):
         height=600
     )
     return fig
+    
 
 def _grafico_percentual(base: pd.DataFrame, titulo: str, valor_col: str):
     """Linha única percentual (0–100%) usando 'Valor'."""
@@ -321,6 +325,7 @@ with col_dir:
             st.plotly_chart(grafico_texto_insuficiente(base_insu, " "), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível em **Texto insuficiente** nessa série.")
+
 
 
 
