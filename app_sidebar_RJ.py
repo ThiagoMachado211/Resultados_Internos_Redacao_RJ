@@ -294,7 +294,7 @@ with col_dir:
         df_med = preparar_df_medias(abas[nome_medias].copy())
         if regional_sel in df_med["Regional"].unique():
             base_med = montar_base_linha(df_med, regional_sel, valor_col="Nota")
-            st.plotly_chart(grafico_medias(base_med, ""), use_container_width=True)
+            st.plotly_chart(grafico_medias(base_med, " "), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível nas **Médias** dessa série.")
 
@@ -306,7 +306,7 @@ with col_dir:
         df_part = preparar_df_percentual(abas[nome_part].copy())
         if regional_sel in df_part["Regional"].unique():
             base_part = montar_base_linha(df_part, regional_sel, valor_col="Valor")
-            st.plotly_chart(grafico_participacao(base_part, "Participação (%)"), use_container_width=True)
+            st.plotly_chart(grafico_participacao(base_part, " "), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível em **Participação** nessa série.")
 
@@ -318,8 +318,9 @@ with col_dir:
         df_insu = preparar_df_percentual(abas[nome_insu].copy())
         if regional_sel in df_insu["Regional"].unique():
             base_insu = montar_base_linha(df_insu, regional_sel, valor_col="Valor")
-            st.plotly_chart(grafico_texto_insuficiente(base_insu, "Texto insuficiente (%)"), use_container_width=True)
+            st.plotly_chart(grafico_texto_insuficiente(base_insu, " "), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível em **Texto insuficiente** nessa série.")
+
 
 
