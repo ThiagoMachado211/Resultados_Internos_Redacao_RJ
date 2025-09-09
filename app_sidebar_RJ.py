@@ -9,7 +9,7 @@ from pandas.api.types import is_numeric_dtype
 
 # ===================== CONFIG =====================
 PAGE_TITLE = "Notas por Regional: Rio de Janeiro"
-FONT_SIZE = 24          # fonte padrão (ticks, labels, legenda, título, hover)
+FONT_SIZE = 30          # fonte padrão (ticks, labels, legenda, título, hover)
 MARKER_SIZE = 12        # tamanho padrão dos marcadores
 DEFAULT_XLSX = "data/Comparativo_RJ.xlsx"
 Y_PAD_PCT = 0.05        # padding vertical do gráfico de médias
@@ -325,6 +325,7 @@ with col_dir:
             st.plotly_chart(grafico_texto_insuficiente(base_insu, " "), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível em **Texto insuficiente** nessa série.")
+
 
 
 
