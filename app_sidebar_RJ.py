@@ -200,7 +200,7 @@ def _make_single_line(
     titulo: str,
     mostrar_hover: bool = False,
     marker_size: int = 12,
-    font_size: int = 26,
+    font_size: int = 36,
     y_min: int = -15,
     y_max: int = 115,
     height: int = 900,
@@ -346,6 +346,7 @@ with col_main:
     # plotly
     st.plotly_chart(fig_part, use_container_width=True, width=100)
     st.plotly_chart(fig_insu, use_container_width=True, width=100)
+
 
 
 
