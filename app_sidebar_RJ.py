@@ -249,7 +249,7 @@ if not excel_path.exists():
 abas = ler_abas_local(excel_path)
 
 # Layout fixo: esquerda (série + regional), direita (3 gráficos empilhados)
-col_esq, col_dir = st.columns([1, 4], gap="large")
+col_esq, col_dir = st.columns([1, 3], gap="large")
 
 with col_esq:
     st.markdown("### Série")
@@ -325,6 +325,7 @@ with col_dir:
             st.plotly_chart(grafico_texto_insuficiente(base_insu, " "), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível em **Texto insuficiente** nessa série.")
+
 
 
 
