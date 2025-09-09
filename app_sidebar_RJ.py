@@ -173,7 +173,7 @@ def grafico_medias(base: pd.DataFrame, titulo: str):
     ymax = float(base["Nota"].max()) * (1 + Y_PAD_PCT)
 
     fig = px.line(base, x="Avaliação", y="Nota", markers=True, title=titulo, 
-                  text=base["Nota"].map(lambda v: f"Nota {v:.2f}"))
+                  text=base["Nota"].map(lambda v: f"{v:.2f}"))
 
     fig.update_traces(
         mode="lines+markers+text",                      # <- garante exibição do texto
@@ -325,6 +325,7 @@ with col_dir:
             st.plotly_chart(grafico_texto_insuficiente(base_insu, " "), use_container_width=True)
         else:
             st.info(f"A regional **{regional_sel}** não está disponível em **Texto insuficiente** nessa série.")
+
 
 
 
