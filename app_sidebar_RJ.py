@@ -1,4 +1,4 @@
-# app.py — Notas por Regional (mantém opções originais; 2 linhas no gráfico 2)
+# app_sidebar_RJ.py — Três gráficos padronizados (médias, participação, insuficiente)
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -7,35 +7,27 @@ import streamlit as st
 from pandas.api.types import is_numeric_dtype
 
 # ===================== CONFIG =====================
-PAGE_TITLE = "Notas de Redação por Regional: Rio de Janeiro"
-FONT_SIZE = 36         # fonte maior
-MARKER_SIZE = 12
+PAGE_TITLE = "Notas por Regional: Rio de Janeiro"
+FONT_SIZE = 24          # <- fonte padrão (ticks, labels, legenda, título, hover)
+MARKER_SIZE = 12        # <- tamanho padrão dos marcadores
 DEFAULT_XLSX = "data/Comparativo_RJ.xlsx"
+Y_PAD_PCT = 0.05        # padding vertical do gráfico de médias
 # ==================================================
-
 
 st.set_page_config(page_title=PAGE_TITLE, layout="wide")
 st.title(PAGE_TITLE)
 st.caption("")
 
-
-# ---------- CSS: fonte maior + espaçamento no menu esquerdo ----------
-st.markdown(
-    f"""
+# ---------- CSS: fonte da UI ===========
+st.markdown(f"""
 <style>
 html, body, [class*="css"] {{ font-size: {FONT_SIZE}px !important; }}
 .stSelectbox label {{ font-size: {FONT_SIZE}px !important; }}
 .stSelectbox div[data-baseweb="select"] div {{ font-size: {FONT_SIZE}px !important; }}
-div[role="radiogroup"] label, div[role="radiogroup"] p {{ font-size: 50px !important; color: black; font-weight: bold; }}
-
-/* respiro vertical nas opções do radio */
-div[role="radiogroup"] > * {{ margin-bottom: 5px !important; }}
-div[role="radiogroup"] > div {{ padding: 0 0 !important; }}
+div[role="radiogroup"] label {{ font-size: {FONT_SIZE}px !important; }}
+div[role="radiogroup"] p {{ font-size: {FONT_SIZE}px !important; }}
 </style>
-""",
-    unsafe_allow_html=True,
-)
-
+""", unsafe_allow_html=True)
 
 # ---------- Utilitários ----------
 def resolve_excel_path(default_rel_path: str = DEFAULT_XLSX) -> Path | None:
@@ -51,8 +43,8 @@ def resolve_excel_path(default_rel_path: str = DEFAULT_XLSX) -> Path | None:
         return p
     return here / default_rel_path
 
-
 def parse_br_number(x):
+    """Converte '452,74', '1.234,56', '1,234.56', '57%' em float; mantém floats/ints."""
     if pd.isna(x):
         return np.nan
     if isinstance(x, (int, float, np.integer, np.floating)):
@@ -71,38 +63,52 @@ def parse_br_number(x):
         s = s.replace(",", "")
     return pd.to_numeric(s, errors="coerce")
 
+def as_percent(series: pd.Series) -> pd.Series:
+    """Garante 0–100. Se os dados vierem 0–1, multiplica por 100."""
+    s = pd.to_numeric(series, errors="coerce")
+    return s * 100 if s.max() is not np.nan and s.max() <= 1.2 else s
 
 def ler_abas_local(caminho: Path) -> dict[str, pd.DataFrame]:
     return pd.read_excel(caminho, sheet_name=None, engine="openpyxl")
 
-
-def preparar_df(df: pd.DataFrame) -> pd.DataFrame:
+def preparar_df_medias(df: pd.DataFrame) -> pd.DataFrame:
+    """Médias: retorna df_long (Regional, Avaliação, Nota). Remove linha 'presença' se houver."""
     if df.columns[0] != "Regional":
         df = df.rename(columns={df.columns[0]: "Regional"})
-    # se a última linha for algo como "Presença" (não-regional), descarta
     ultima_rotulo = str(df.iloc[-1, 0]).lower()
     if "presen" in ultima_rotulo:
         df = df.iloc[:-1].copy()
-
     aval_cols = list(df.columns[1:])
     for c in aval_cols:
         if not is_numeric_dtype(df[c]):
             df[c] = df[c].map(parse_br_number)
-
-    df_long = df.melt(
-        id_vars="Regional", value_vars=aval_cols,
-        var_name="Avaliação", value_name="Valor"
-    )
-    df_long["Avaliação"] = pd.Categorical(
-        df_long["Avaliação"], categories=aval_cols, ordered=True
-    )
+    df_long = df.melt(id_vars="Regional", value_vars=aval_cols,
+                      var_name="Avaliação", value_name="Nota")
+    df_long["Avaliação"] = pd.Categorical(df_long["Avaliação"],
+                                          categories=aval_cols, ordered=True)
     return df_long
 
+def preparar_df_percentual(df: pd.DataFrame) -> pd.DataFrame:
+    """Participação / Insuf.: devolve df_long (Regional, Avaliação, Valor[0–100])."""
+    # Primeira coluna deve ser Regional
+    if df.columns[0] != "Regional":
+        df = df.rename(columns={df.columns[0]: "Regional"})
+    aval_cols = list(df.columns[1:])
+    for c in aval_cols:
+        if not is_numeric_dtype(df[c]):
+            df[c] = df[c].map(parse_br_number)
+    df_long = df.melt(id_vars="Regional", value_vars=aval_cols,
+                      var_name="Avaliação", value_name="Valor")
+    df_long["Avaliação"] = pd.Categorical(df_long["Avaliação"],
+                                          categories=aval_cols, ordered=True)
+    df_long["Valor"] = as_percent(df_long["Valor"])
+    return df_long
 
-def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
+def montar_base_linha(df_long: pd.DataFrame, regional: str, valor_col: str) -> pd.DataFrame:
+    """Calcula deltas e labels (genérico para médias e percentuais)."""
     base = df_long[df_long["Regional"] == regional].sort_values("Avaliação").copy()
-    base["Anterior"] = base["Valor"].shift(1)
-    base["Delta"] = base["Valor"] - base["Anterior"]
+    base["Anterior"] = base[valor_col].shift(1)
+    base["Delta"] = base[valor_col] - base["Anterior"]
     base["Delta_pct"] = (base["Delta"] / base["Anterior"]) * 100
 
     def fsgn(x): return "—" if pd.isna(x) else f"{x:+.2f}"
@@ -110,81 +116,11 @@ def montar_base(df_long: pd.DataFrame, regional: str) -> pd.DataFrame:
 
     base["hover_text"] = (
         "<b>" + base["Avaliação"].astype(str) + "</b>"
-        + "<br>Valor: " + base["Valor"].map(fnum)
-        + "<br>Variação absoluta: " + base["Delta"].map(fsgn)
-        + "<br>Variação percentual: " + base["Delta_pct"].map(fsgn) + "%"
+        + f"<br>Valor: " + base[valor_col].map(fnum)
+        + "<br>Variação Absoluta: " + base["Delta"].map(fsgn)
+        + "<br>Variação Percentual: " + base["Delta_pct"].map(fsgn) + "%"
     )
     return base
-
-
-# --------- localizar abas companheiras (sem aparecer no menu) ----------
-def achar_companheiras(todas_abas: dict, base_name: str):
-    """Encontra as abas de 'Participação' e 'Texto Insuficiente' correspondentes ao base_name.
-    É tolerante a variações: 'participa', 'texto insuf', nomes cortados pelo limite do Excel, etc."""
-    base_lower = base_name.lower()
-    part_name = None
-    insuf_name = None
-    for nome in todas_abas.keys():
-        low = nome.lower()
-        if low == base_lower:
-            continue
-        if low.startswith(base_lower) and "particip" in low:
-            part_name = nome
-        if low.startswith(base_lower) and ("texto" in low and "insuf" in low):
-            insuf_name = nome
-    return part_name, insuf_name
-
-
-
-# ---------- Gráficos ----------
-def grafico_notas(base_notas: pd.DataFrame, titulo: str):
-    # texto: somente a nota, sempre acima
-    txt = base_notas["Valor"].map(lambda v: f"{v:.2f}")
-    
-    cores_txt = []
-    for i, delta in enumerate(base_notas["Delta"]):
-        if i == 0 or pd.isna(delta):
-            cores_txt.append("grey")
-        else:
-            cores_txt.append("royalblue" if delta > 0 else "red")
-    
-    fig = px.line(base_notas, x="Avaliação", y="Valor", markers=True, title=titulo)
-    fig.update_traces(
-        mode="lines+markers+text",    
-        text=txt,
-        textposition="top center",
-        texttemplate="%{y:.2f}", 
-        textfont=dict(size=FONT_SIZE), 
-        textfont_color=cores_txt,
-        marker=dict(size=MARKER_SIZE),
-        hovertext=base_notas["hover_text"],
-        hovertemplate="%{hovertext}<extra></extra>",
-        line=dict(width=3),
-    )
-    y_min = 0.9 * float(base_notas["Valor"].min())
-    y_max = 1.1 * float(base_notas["Valor"].max())
-    
-    fig.update_layout(
-        title=dict(text=titulo, x=0.5, xanchor="center", y=0.98, yanchor="top", pad=dict(b=12)),
-        title_font=dict(size=50),
-        font=dict(size=FONT_SIZE),
-        xaxis_title="", yaxis_title="",
-        xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
-        yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
-                   range=[y_min, y_max]),
-        legend=dict(font=dict(size=FONT_SIZE)),
-        hovermode="x unified",
-        hoverlabel=dict(font_size=FONT_SIZE),
-        height=750
-    )
-    return fig
-
-
-# ---------- helpers reutilizáveis ----------
-def as_percent(series: pd.Series) -> pd.Series:
-    """Converte 0–1 para 0–100 quando necessário."""
-    s = pd.to_numeric(series, errors="coerce")
-    return s * 100 if s.max() <= 1.2 else s
 
 def cores_por_delta(deltas):
     cores = []
@@ -195,158 +131,145 @@ def cores_por_delta(deltas):
             cores.append("royalblue" if d > 0 else "crimson")
     return cores
 
-def _make_single_line(
-    df_metric: pd.DataFrame,
-    titulo: str,
-    mostrar_hover: bool = False,
-    marker_size: int = 12,
-    font_size: int = 36,
-    y_min: int = -15,
-    y_max: int = 115,
-    height: int = 900,
-):
-    dfp = df_metric[["Avaliação", "Valor", "Delta"]].copy()
-    dfp["Valor_pct"] = as_percent(dfp["Valor"])
-    dfp["Label"] = dfp["Valor_pct"].map(lambda v: f"{v:.2f}%")
+# ===================== GRÁFICOS PADRONIZADOS =====================
+def grafico_medias(base: pd.DataFrame, titulo: str):
+    """Linha única de médias (usa coluna 'Nota')."""
+    ymin = float(base["Nota"].min()) * (1 - Y_PAD_PCT)
+    ymax = float(base["Nota"].max()) * (1 + Y_PAD_PCT)
 
-    fig = px.line(
-        dfp, x="Avaliação", y="Valor_pct",
-        markers=True, text="Label", title=titulo
-    )
-
+    fig = px.line(base, x="Avaliação", y="Nota", markers=True, title=titulo)
     fig.update_traces(
-        mode="lines+markers+text",
+        marker=dict(size=MARKER_SIZE),
+        text=base["Nota"].map(lambda v: f"Nota {v:.2f}"),
         textposition="top center",
-        marker=dict(size=marker_size),
-        line=dict(width=3),
-        hoverinfo=None if not mostrar_hover else "skip",
-        hovertemplate=None if not mostrar_hover else "%{y:.2f}%",
-        showlegend=False,  # gráfico de uma única série
+        textfont=dict(size=FONT_SIZE, color=cores_por_delta(base["Delta"].tolist())),
+        hovertext=base["hover_text"],
+        hovertemplate="%{hovertext}<extra></extra>",
+        showlegend=False
     )
-    if not mostrar_hover:
-        fig.update_layout(hovermode=False)
-
-    # cores dos rótulos por delta
-    cores = cores_por_delta(dfp["Delta"].tolist())
-    fig.data[0].textfont = dict(size=font_size, color=cores)
-
     fig.update_layout(
-        font=dict(size=font_size),
+        font=dict(size=FONT_SIZE),
         xaxis_title="", yaxis_title="",
-        xaxis=dict(tickfont=dict(size=font_size), title_font=dict(size=font_size)),
-        yaxis=dict(
-            tickfont=dict(size=font_size),
-            title_font=dict(size=font_size),
-            range=[y_min, y_max],
-            ticksuffix="%",
-        ),
-        title=dict(x=0.5, xanchor="center", y=0.98, yanchor="top", pad=dict(b=12)),
-        title_font=dict(size=50),
-        margin=dict(t=160),
-        height=height,
+        xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
+        yaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE), range=[ymin, ymax]),
+        legend=dict(font=dict(size=FONT_SIZE)),
+        title_font=dict(size=FONT_SIZE),
+        hovermode="x unified",
+        hoverlabel=dict(font_size=FONT_SIZE),
+        height=600
     )
     return fig
 
-# ---------- funções separadas ----------
-def grafico_participacao(
-    base_part: pd.DataFrame,
-    titulo_base: str = "Participação",
-    mostrar_hover: bool = False,
-    marker_size: int = 12,
-    font_size: int = 26,
-):
-    titulo = f"{titulo_base} (%)"
-    return _make_single_line(
-        base_part, titulo, mostrar_hover, marker_size, font_size
+def _grafico_percentual(base: pd.DataFrame, titulo: str, valor_col: str):
+    """Linha única percentual (0–100%) usando 'Valor'."""
+    base = base.copy()
+    base["Label"] = base[valor_col].map(lambda v: f"{v:.2f}%")
+
+    fig = px.line(base, x="Avaliação", y=valor_col, markers=True, text="Label", title=titulo)
+    fig.update_traces(
+        mode="lines+markers+text",
+        marker=dict(size=MARKER_SIZE),
+        line=dict(width=3),
+        textposition="top center",
+        textfont=dict(size=FONT_SIZE, color=cores_por_delta(base["Delta"].tolist())),
+        hovertext=base["hover_text"],
+        hovertemplate="%{hovertext}<extra></extra>",
+        showlegend=False
     )
-
-def grafico_texto_insuficiente(
-    base_insuf: pd.DataFrame,
-    titulo_base: str = "Texto insuficiente",
-    mostrar_hover: bool = False,
-    marker_size: int = 12,
-    font_size: int = 26,
-):
-    titulo = f"{titulo_base} (%)"
-    return _make_single_line(
-        base_insuf, titulo, mostrar_hover, marker_size, font_size
+    fig.update_layout(
+        font=dict(size=FONT_SIZE),
+        xaxis_title="", yaxis_title="",
+        xaxis=dict(tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE)),
+        yaxis=dict(
+            tickfont=dict(size=FONT_SIZE), title_font=dict(size=FONT_SIZE),
+            range=[-15, 115], ticksuffix="%"
+        ),
+        title_font=dict(size=FONT_SIZE),
+        hovermode="x unified",
+        hoverlabel=dict(font_size=FONT_SIZE),
+        height=600
     )
-# ---------- Gráficos ----------------
+    return fig
 
+def grafico_participacao(base_part: pd.DataFrame, titulo: str = "Participação (%)"):
+    return _grafico_percentual(base_part, titulo, valor_col="Valor")
 
-# ---------- Main ----------
+def grafico_texto_insuficiente(base_insuf: pd.DataFrame, titulo: str = "Texto insuficiente (%)"):
+    return _grafico_percentual(base_insuf, titulo, valor_col="Valor")
+
+# ---------- helpers de busca de sheet ----------
+def achar_sheet(abas_dict: dict, *keywords) -> str | None:
+    """Retorna o nome da sheet cujo título contém todas as keywords (case-insensitive)."""
+    keys = [k.lower() for k in abas_dict.keys()]
+    for name in abas_dict.keys():
+        low = name.lower()
+        if all(k in low for k in keywords):
+            return name
+    return None
+
+# ===================== MAIN =====================
 excel_path = resolve_excel_path()
 if not excel_path.exists():
     st.error(
         f"Arquivo .xlsx não encontrado em: `{excel_path}`.\n\n"
-        "• Coloque o arquivo no repositório nesse caminho OU\n"
-        "• Defina `EXCEL_PATH` em Settings → Secrets (ex.: EXCEL_PATH=\"data/Comparativo_MG.xlsx\")."
+        "• Coloque o arquivo nesse caminho OU\n"
+        "• Defina EXCEL_PATH em Settings → Secrets (ex.: EXCEL_PATH=\"data/Comparativo_RJ.xlsx\")."
     )
     st.stop()
 
 abas = ler_abas_local(excel_path)
 
-# *** MANTÉM APENAS AS OPÇÕES ORIGINAIS NO MENU ***
-# Filtra fora nomes que contaminem o menu (participação / texto insuficiente)
-tab_names = [
-    n for n in abas.keys()
-    if ("particip" not in n.lower()) and not ("texto" in n.lower() and "insuf" in n.lower())
-]
+tab_medias, tab_part, tab_insu = st.tabs(["Médias", "Participação", "Texto insuficiente"])
 
-col_nav, col_main = st.columns([1, 3], gap="small")
+# ---------- TAB: MÉDIAS ----------
+with tab_medias:
+    tab_names = list(abas.keys())
+    col_nav, col_main = st.columns([1, 4], gap="large")
 
-with col_nav:
-    st.markdown("")
-    aba_sel = st.radio(
-        label="Abas",
-        options=tab_names,
-        index=0,
-        width=600,
-        key="aba_radio",
-        label_visibility="collapsed"
-    )
-
-with col_main:
-    st.subheader(aba_sel)
-
-    # ----- NOTAS -----
-    df_sheet = abas[aba_sel].copy()
-    df_long_notas = preparar_df(df_sheet)
-
-    regionais = df_long_notas["Regional"].dropna().unique()
-    regional = st.selectbox(
-        "Regional",
-        sorted(regionais),
-        key=f"reg_{aba_sel}",
-        label_visibility="visible"
-    )
-
-    base_notas = montar_base(df_long_notas, regional)
-    st.plotly_chart(grafico_notas(base_notas, "Evolução das Notas"), use_container_width=True, width=100)
-
-    # ----- PARTICIPAÇÃO e TEXTO INSUFICIENTE (busca abas companheiras sem mostrar no menu) -----
-    aba_part, aba_insu = achar_companheiras(abas, aba_sel)
-
-    if not aba_part or not aba_insu:
-        st.info(
-            "Para o 2º gráfico, procuro abas companheiras que comecem com "
-            f"`{aba_sel}` e contenham “participa” e “texto insuf…”.\n"
-            "Ex.: `2º Ano - Regular - Participação` e `2º Ano - Regular - Texto Insuficiente`.\n"
-            "Se os nomes estiverem diferentes, me diga que eu ajusto o detector."
+    with col_nav:
+        st.markdown("")
+        aba_sel = st.radio(
+            label="Abas",
+            options=tab_names,
+            index=0,
+            key="aba_radio_medias",
+            label_visibility="collapsed"
         )
+
+    with col_main:
+        st.subheader(aba_sel)
+        df_sheet = abas[aba_sel].copy()
+        df_long = preparar_df_medias(df_sheet)
+        regionais = df_long["Regional"].dropna().unique()
+        regional = st.selectbox(
+            "Regional", sorted(regionais), key=f"reg_{aba_sel}_medias", label_visibility="visible"
+        )
+        base = montar_base_linha(df_long, regional, valor_col="Nota")
+        fig = grafico_medias(base, "")
+        st.plotly_chart(fig, use_container_width=True)
+
+# ---------- TAB: PARTICIPAÇÃO ----------
+with tab_part:
+    nome_sheet_part = achar_sheet(abas, "particip")
+    if not nome_sheet_part:
+        st.info("Sheet de **Participação** não encontrada no Excel (procuro por 'particip' no nome).")
     else:
-        df_long_part = preparar_df(abas[aba_part])
-        df_long_insu = preparar_df(abas[aba_insu])
-        base_part = montar_base(df_long_part, regional)
-        base_insuf = montar_base(df_long_insu, regional)
+        dfp = preparar_df_percentual(abas[nome_sheet_part].copy())
+        regionais = dfp["Regional"].dropna().unique()
+        regp = st.selectbox("Regional", sorted(regionais), key="reg_part", label_visibility="visible")
+        basep = montar_base_linha(dfp, regp, valor_col="Valor")
+        figp = grafico_participacao(basep, "Participação (%)")
+        st.plotly_chart(figp, use_container_width=True)
 
-        fig_part = grafico_participacao(base_part, titulo_base="Participação")
-        fig_insu = grafico_texto_insuficiente(base_insuf, titulo_base="Texto insuficiente")
-
-    # plotly
-    st.plotly_chart(fig_part, use_container_width=True, width=100)
-    st.plotly_chart(fig_insu, use_container_width=True, width=100)
-
-
-
-
+# ---------- TAB: TEXTO INSUFICIENTE ----------
+with tab_insu:
+    nome_sheet_insu = achar_sheet(abas, "insuf")
+    if not nome_sheet_insu:
+        st.info("Sheet de **Texto insuficiente** não encontrada no Excel (procuro por 'insuf' no nome).")
+    else:
+        dfi = preparar_df_percentual(abas[nome_sheet_insu].copy())
+        regionais = dfi["Regional"].dropna().unique()
+        regi = st.selectbox("Regional", sorted(regionais), key="reg_insu", label_visibility="visible")
+        basei = montar_base_linha(dfi, regi, valor_col="Valor")
+        figi = grafico_texto_insuficiente(basei, "Texto insuficiente (%)")
+        st.plotly_chart(figi, use_container_width=True)
