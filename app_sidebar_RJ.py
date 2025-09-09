@@ -1,4 +1,4 @@
-# app_sidebar_RJ.py — Seleção (3º reg | 2º reg | 3º EJA) na esquerda; 3 gráficos empilhados na direita
+# app_sidebar_RJ.py — Série (3º reg | 2º reg | 3º EJA) e Regional na esquerda; 3 gráficos empilhados na direita
 from pathlib import Path
 import unicodedata
 import numpy as np
@@ -31,7 +31,7 @@ div[role="radiogroup"] p {{ font-size: {FONT_SIZE}px !important; }}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- Utilitários (baseados no seu app) ----------
+# ---------- Utilitários ----------
 def resolve_excel_path(default_rel_path: str = DEFAULT_XLSX) -> Path | None:
     here = Path(__file__).parent
     try:
@@ -149,9 +149,8 @@ def achar_sheet_por_serie(abas_dict: dict, serie_label: str, tipo: str) -> str |
     - tipo: "medias" | "particip" | "insuf"
     """
     serie_norm = _normalize(serie_label)
-    # termos por tipo (flexíveis)
     termos_tipo = {
-        "medias": ["media", "nota"],           # qualquer um que apareça
+        "medias": ["media", "nota"],
         "particip": ["particip"],
         "insuf": ["insuf", "insuficiente"]
     }[tipo]
@@ -159,11 +158,9 @@ def achar_sheet_por_serie(abas_dict: dict, serie_label: str, tipo: str) -> str |
     for name in abas_dict.keys():
         low = _normalize(name)
         if all(t in low for t in [serie_norm.split()[0]]) and any(t in low for t in termos_tipo):
-            # regra: precisa pelo menos conter o primeiro token da série (ex.: "3" de "3 ano regular")
-            # e conter algum termo do tipo
             return name
 
-    # fallback: apenas por tipo (se as sheets já estiverem separadas por arquivo)
+    # fallback por tipo (caso as sheets estejam separadas por tipo apenas)
     for name in abas_dict.keys():
         if any(t in _normalize(name) for t in termos_tipo):
             return name
@@ -247,7 +244,7 @@ if not excel_path.exists():
 
 abas = ler_abas_local(excel_path)
 
-# Layout fixo: esquerda (série), direita (3 gráficos)
+# Layout fixo: esquerda (série + regional), direita (3 gráficos empilhados)
 col_esq, col_dir = st.columns([1, 4], gap="large")
 
 with col_esq:
@@ -260,51 +257,67 @@ with col_esq:
         label_visibility="collapsed"
     )
 
-with col_dir:
-    # 1) localizar sheet de MÉDIAS para a série
+    # localizar sheets desta série
     nome_medias = achar_sheet_por_serie(abas, serie_escolhida, tipo="medias")
+    nome_part  = achar_sheet_por_serie(abas, serie_escolhida, tipo="particip")
+    nome_insu  = achar_sheet_por_serie(abas, serie_escolhida, tipo="insuf")
+
+    # montar lista de regionais (união das disponíveis nas sheets existentes)
+    regionais_sets = []
+    if nome_medias:
+        regionais_sets.append(set(preparar_df_medias(abas[nome_medias].copy())["Regional"].dropna().unique()))
+    if nome_part:
+        regionais_sets.append(set(preparar_df_percentual(abas[nome_part].copy())["Regional"].dropna().unique()))
+    if nome_insu:
+        regionais_sets.append(set(preparar_df_percentual(abas[nome_insu].copy())["Regional"].dropna().unique()))
+
+    if regionais_sets:
+        regionais = sorted(set.union(*regionais_sets))
+    else:
+        regionais = []
+
+    st.markdown("### Regional")
+    regional_sel = st.selectbox(
+        "Regional",
+        regionais if regionais else ["—"],
+        index=0,
+        key="reg_unica",
+        label_visibility="collapsed"
+    )
+
+with col_dir:
+    # ---- MÉDIAS ----
+    st.subheader("Médias")
     if not nome_medias:
         st.info(f"Não encontrei sheet de **Médias** para **{serie_escolhida}** no Excel.")
     else:
         df_med = preparar_df_medias(abas[nome_medias].copy())
-        regionais = sorted(df_med["Regional"].dropna().unique())
-        regional_sel = st.selectbox("Regional", regionais, key="reg_med", label_visibility="visible")
+        if regional_sel in df_med["Regional"].unique():
+            base_med = montar_base_linha(df_med, regional_sel, valor_col="Nota")
+            st.plotly_chart(grafico_medias(base_med, ""), use_container_width=True)
+        else:
+            st.info(f"A regional **{regional_sel}** não está disponível nas **Médias** dessa série.")
 
-        base_med = montar_base_linha(df_med, regional_sel, valor_col="Nota")
-        st.subheader("Médias")
-        st.plotly_chart(grafico_medias(base_med, ""), use_container_width=True)
-
-    # 2) localizar sheet de PARTICIPAÇÃO
-    nome_part = achar_sheet_por_serie(abas, serie_escolhida, tipo="particip")
+    # ---- PARTICIPAÇÃO ----
+    st.subheader("Participação (%)")
     if not nome_part:
         st.info(f"Não encontrei sheet de **Participação** para **{serie_escolhida}** no Excel.")
     else:
         df_part = preparar_df_percentual(abas[nome_part].copy())
-        # usa a mesma regional selecionada acima, se existir nessa sheet; senão, oferece select
-        if nome_medias and regional_sel in df_part["Regional"].unique():
-            regional_part = regional_sel
+        if regional_sel in df_part["Regional"].unique():
+            base_part = montar_base_linha(df_part, regional_sel, valor_col="Valor")
+            st.plotly_chart(grafico_participacao(base_part, "Participação (%)"), use_container_width=True)
         else:
-            regional_part = st.selectbox(
-                "Regional (Participação)", sorted(df_part["Regional"].dropna().unique()),
-                key="reg_part", label_visibility="visible"
-            )
-        base_part = montar_base_linha(df_part, regional_part, valor_col="Valor")
-        st.subheader("Participação (%)")
-        st.plotly_chart(grafico_participacao(base_part, "Participação (%)"), use_container_width=True)
+            st.info(f"A regional **{regional_sel}** não está disponível em **Participação** nessa série.")
 
-    # 3) sheet de TEXTO INSUFICIENTE
-    nome_insu = achar_sheet_por_serie(abas, serie_escolhida, tipo="insuf")
+    # ---- TEXTO INSUFICIENTE ----
+    st.subheader("Texto insuficiente (%)")
     if not nome_insu:
         st.info(f"Não encontrei sheet de **Texto insuficiente** para **{serie_escolhida}** no Excel.")
     else:
         df_insu = preparar_df_percentual(abas[nome_insu].copy())
-        if nome_medias and regional_sel in df_insu["Regional"].unique():
-            regional_insu = regional_sel
+        if regional_sel in df_insu["Regional"].unique():
+            base_insu = montar_base_linha(df_insu, regional_sel, valor_col="Valor")
+            st.plotly_chart(grafico_texto_insuficiente(base_insu, "Texto insuficiente (%)"), use_container_width=True)
         else:
-            regional_insu = st.selectbox(
-                "Regional (Texto insuficiente)", sorted(df_insu["Regional"].dropna().unique()),
-                key="reg_insu", label_visibility="visible"
-            )
-        base_insu = montar_base_linha(df_insu, regional_insu, valor_col="Valor")
-        st.subheader("Texto insuficiente (%)")
-        st.plotly_chart(grafico_texto_insuficiente(base_insu, "Texto insuficiente (%)"), use_container_width=True)
+            st.info(f"A regional **{regional_sel}** não está disponível em **Texto insuficiente** nessa série.")
